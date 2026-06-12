@@ -1,47 +1,37 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-    <title>404 | InterDet</title>
-    <!-- Подключаем те же стили, что и в index.html, через абсолютный путь -->
-    <link rel="stylesheet" href="/style.css"/> 
-    <style>
-        .page-404 {
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            min-height: 80vh; text-align: center; padding: 20px;
-        }
-        .glitch-404 { font-family: 'JetBrains Mono', monospace; font-size: 10rem; color: var(--cyan); }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>404 — InterDet</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+:root { --cyan: #00D2FF; --bg: #05050A; --text: #E8E8F5; --muted: #8B92A5; --radius: 4px; }
+[data-theme="dark"] { --bg: #05050A; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+nav{padding:16px 24px;border-bottom:1px solid rgba(0, 210, 255, 0.15);}
+.nav-brand{display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.15rem;}
+.brand-icon{width:32px;height:32px;background:var(--cyan);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#000;}
+.page-404{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;gap:24px;}
+.glitch-404{font-family:'JetBrains Mono',monospace;font-size:clamp(5rem,15vw,10rem);font-weight:700;line-height:1;color:var(--cyan);text-shadow:0 0 40px rgba(0,210,255,.4);}
+.err-title{font-size:1.5rem;font-weight:600;font-family:'JetBrains Mono',monospace;}
+.err-sub{font-size:1rem;color:var(--muted);max-width:400px;line-height:1.6}
+.cta-btn{padding:18px 44px;background:var(--cyan);color:#000;font-weight:700;border-radius:var(--radius);cursor:pointer;font-family:'JetBrains Mono',monospace;text-transform:uppercase;border:none;}
+</style>
 </head>
 <body>
 
 <nav>
-    <div class="nav-brand"><div class="brand-icon">ID</div> InterDet</div>
-    <div class="nav-right">
-        <button class="theme-btn" id="theme-toggle">🌙</button>
-        <select class="lang-select" id="lang-select">
-            <option value="en">EN</option>
-            <option value="ru">RU</option>
-            <option value="es">ES</option>
-            <option value="de">DE</option>
-            <option value="fr">FR</option>
-            <option value="tr">TR</option>
-            <option value="pl">PL</option>
-            <option value="uk">UA</option>
-        </select>
-    </div>
+  <div class="nav-brand"><div class="brand-icon">ID</div>InterDet</div>
 </nav>
 
 <div class="page-404">
-    <div class="glitch-404">404</div>
-    <h1 class="err-title">Страница не найдена</h1>
-    <p class="err-sub">Этот путь не существует в нашей сети. Вернитесь на главную для продолжения диагностики.</p>
-    <br>
-    <a href="/" class="cta-btn">На главную</a>
+  <div class="glitch-404">404</div>
+  <div class="err-title">Signal Lost</div>
+  <div class="err-sub">This page drifted into the network void.</div>
+  <button class="cta-btn" onclick="window.location.href='index.html'">Go Home</button>
 </div>
 
-<!-- Подключаем основной скрипт через абсолютный путь -->
-<script src="/main.js"></script>
 </body>
 </html>
