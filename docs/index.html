@@ -1113,14 +1113,28 @@ function shareScore(){
 /* ─── INIT ─── */
 (function init(){
   setTheme('dark');
-// 1. Массив всех поддерживаемых языков из твоего меню
-  const supportedLangs = ['en', 'ru', 'es', 'de', 'fr', 'tr', 'pl', 'ua'];
+// 1. Наш массив поддерживаемых языков
+const supportedLangs = ['en', 'ru', 'es', 'de', 'fr', 'tr', 'pl', 'ua'];
 
-// 2. Достаем язык браузера (например, 'es-ES' -> 'es')
-  const userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+// 2. Функция умного поиска языка в URL
+function getLangFromUrl() {
+  const segments = window.location.pathname.toLowerCase().split('/');
+  // Перебираем сегменты и ищем тот, который совпадает с нашими языками
+  return segments.find(seg => supportedLangs.includes(seg)) || null;
+}
 
-// 3. Проверяем: если язык есть в списке — ставим его, если нет — дефолтный 'en'
+// 3. Сама инициализация при старте страницы
+const urlLang = getLangFromUrl();
+
+if (urlLang) {
+  // Если в пути нашли 'es', 'ru' и т.д. — включаем его
+  setLang(urlLang);
+} else {
+  // Если в пути языка нет (просто корень сайта), включаем автоопределение по браузеру
+  let userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+  if (userLang === 'uk') userLang = 'ua';
   setLang(supportedLangs.includes(userLang) ? userLang : 'en');
+}
   
   document.getElementById('start-btn').addEventListener('click',()=>runTest().catch(console.error));
   document.getElementById('retest-btn').addEventListener('click',()=>runTest().catch(console.error));
