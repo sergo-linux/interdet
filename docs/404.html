@@ -2,22 +2,29 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>InterDet</title>
-    <script type="text/javascript">
-      var l = window.location;
-      
-      // Проверяем, есть ли имя репозитория в пути.
-      // Если мы на github.io, pathname начинается с "/имя_репозитория" (например, /interdet/es)
-      var isGithubIo = l.hostname.indexOf('github.io') !== -1;
-      var pathSegments = l.pathname.split('/');
-      
-      // Если гитхаб — берем имя репо, если свой домен — имя репо пустое
-      var repoName = isGithubIo ? '/' + pathSegments[1] : '';
-      var routePath = isGithubIo ? pathSegments.slice(2).join('/') : pathSegments.slice(1).join('/');
-      
-      // Делаем правильный редирект
-      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + repoName + '/?p=' + routePath.replace(/&/g, '~and~') + l.search + l.hash);
-    </script>
+    <title>404 - InterDet</title>
+    <style>
+      body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #000; color: #fff; }
+    </style>
   </head>
-  <body></body>
+  <body>
+    <h1>404 - Not Found</h1>
+    <script type="text/javascript">
+      // Список твоих языков
+      const supportedLangs = ['en', 'ru', 'es', 'de', 'fr', 'tr', 'pl', 'ua'];
+      const path = window.location.pathname.toLowerCase();
+      
+      // Проверяем: начинается ли путь с какого-то языка?
+      // Например: "/es" или "/es/"
+      const isRoute = supportedLangs.some(lang => path.startsWith('/' + lang));
+
+      if (isRoute) {
+        // Если это язык — редиректим в SPA
+        window.location.replace('/?p=' + path.slice(1));
+      } else {
+        // Если это не язык — оставляем пользователя на странице с 404
+        document.body.innerHTML = "<h1>404 - Not Found</h1><p>Страница не найдена</p>";
+      }
+    </script>
+  </body>
 </html>
