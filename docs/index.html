@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>InterDet — Internet Diagnostics</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2300D2FF'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='JetBrains Mono, monospace' font-weight='700' font-size='15' fill='%23000000'%3EID%3C/text%3E%3C/svg%3E"/>
+<meta name="description" content="Advanced internet diagnostic tool. Test your connection speed, ping, stability, and service availability."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<style>
+/* ─── DESIGN TOKENS (SHARP/TERMINAL AESTHETIC) ─── */
+:root {
+  --cyan:    #00D2FF;
+  --teal:    #00B8A9;
+  --violet:  #7C3AED;
+  --green:   #22C55E;
+  --yellow:  #F59E0B;
+  --red:     #EF4444;
+  --radius:  4px;  /* Sharp edges */
+  --radius-sm: 2px;
+  --glow:    0 0 24px rgba(0,210,255,.18);
+  --transition: .22s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:       #05050A;
+  --bg2:      #0A0A12;
+  --bg3:      #12121C;
+  --border:   rgba(0, 210, 255, 0.15);
+  --text:     #E8E8F5;
+  --muted:    #8B92A5;
+  --card:     rgba(0, 210, 255, 0.02);
+  --card-b:   rgba(0, 210, 255, 0.05);
+  --scan-line:rgba(0,210,255,.05);
+}
+[data-theme="light"] {
+  color-scheme: light;
+  --bg:       #F4F7FC;
+  --bg2:      #FFFFFF;
+  --bg3:      #E2E8F0;
+  --border:   rgba(0, 0, 0, 0.1);
+  --text:     #0F172A;
+  --muted:    #64748B;
+  --card:     #FFFFFF;
+  --card-b:   #F8FAFC;
+  --scan-line:rgba(0,0,0,.03);
+}
+
+/* ─── RESET & BASE ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Space Grotesk',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  transition:background var(--transition),color var(--transition);
+  overflow-x:hidden;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;border:none;outline:none}
+::selection{background:rgba(0,210,255,.25)}
+
+/* ─── SCAN-LINE OVERLAY ─── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,var(--scan-line) 0,var(--scan-line) 1px,transparent 1px,transparent 4px);
+  pointer-events:none;z-index:0;opacity:.5;
+}
+
+/* ─── LAYOUT ─── */
+.page{display:none;flex-direction:column;min-height:100vh;position:relative;z-index:1}
+.page.active{display:flex}
+
+/* ─── NAVBAR ─── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  position:sticky;top:0;z-index:100;
+  background:rgba(5,5,10,.8);
+}
+[data-theme="light"] nav{background:rgba(244,247,252,.8)}
+.nav-brand{
+  display:flex;align-items:center;gap:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;font-size:1.15rem;letter-spacing:-.02em;
+}
+.brand-icon{
+  width:32px;height:32px;
+  background:var(--cyan);
+  border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;color:#000;font-weight:700;
+  box-shadow: 0 0 12px rgba(0,210,255,.4);
+}
+.nav-right{display:flex;align-items:center;gap:12px}
+.theme-btn{
+  width:40px;height:40px;
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;
+  transition:all var(--transition);
+  color:var(--text);
+}
+.theme-btn:hover{background:var(--card-b);border-color:var(--cyan);box-shadow:0 0 8px rgba(0,210,255,.2)}
+.lang-select{
+  background:var(--bg3);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  color:var(--text);
+  padding:8px 14px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:.85rem;
+  font-weight: 600;
+  appearance:none;
+  cursor:pointer;
+  transition:all var(--transition);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2300D2FF'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  padding-right:32px;
+}
+.lang-select:focus, .lang-select:hover{outline:none;border-color:var(--cyan);box-shadow:0 0 8px rgba(0,210,255,.2)}
+.lang-select option { background: var(--bg2); color: var(--text); }
+
+/* ─── HERO ─── */
+.hero{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:60px 20px;
+  text-align:center;
+  position:relative;
+}
+.hero-glow{
+  position:absolute;
+  width:50vw;height:50vw;max-width:600px;max-height:600px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,210,255,.08) 0%,transparent 70%);
+  pointer-events:none;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+}
+
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(0,210,255,.05);
+  border:1px solid var(--cyan);
+  border-radius:var(--radius-sm);
+  padding:6px 16px;
+  font-size:.8rem;
+  font-family:'JetBrains Mono',monospace;
+  color:var(--cyan);
+  margin-bottom:28px;
+  text-transform: uppercase;
+}
+.badge-dot{width:8px;height:8px;background:var(--cyan);animation:blink 1.5s infinite;box-shadow:0 0 8px var(--cyan)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+h1{
+  font-size:clamp(2.2rem, 6vw, 4rem);
+  font-weight:700;
+  line-height:1.1;
+  letter-spacing:-.03em;
+  margin-bottom:20px;
+  color:var(--text);
+}
+h1 span { color: var(--cyan); }
+.subtitle{
+  font-size:1.05rem;color:var(--muted);
+  max-width:540px;line-height:1.6;
+  margin-bottom:44px;
+}
+.cta-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  padding:18px 44px;
+  background:var(--cyan);
+  color:#000;
+  font-weight:700;font-size:1.05rem;
+  border-radius:var(--radius);
+  position:relative;overflow:hidden;
+  transition:all .2s;
+  box-shadow:0 0 20px rgba(0,210,255,.3);
+  font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(0,210,255,.5);background:#33DDFF}
+.cta-btn:active{transform:translateY(0)}
+.cta-arrow{font-size:1.2rem;transition:transform .2s}
+.cta-btn:hover .cta-arrow{transform:translateX(6px)}
+
+.hero-stats{
+  display:flex;gap:40px;margin-top:60px;flex-wrap:wrap;justify-content:center;
+  background:var(--card); border:1px solid var(--border); padding:24px 48px; border-radius:var(--radius);
+}
+.h-stat{text-align:center}
+.h-stat-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.6rem;font-weight:700;color:var(--cyan);
+}
+.h-stat-label{font-size:.75rem;color:var(--muted);margin-top:6px;text-transform:uppercase;letter-spacing:.08em;font-weight:600;}
+
+/* ─── LOADING PAGE (TERMINAL LOOK) ─── */
+.loading-page{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;
+  gap:24px;
+}
+.loader-ascii {
+  font-family:'JetBrains Mono',monospace;
+  color:var(--cyan);
+  font-size: 1.2rem;
+  line-height: 1;
+  white-space: pre;
+  margin-bottom: 20px;
+  text-shadow: 0 0 8px rgba(0,210,255,.5);
+}
+.loading-label{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1rem;color:var(--text);letter-spacing:.1em;
+  text-transform: uppercase;
+}
+.progress-track{
+  width:100%;max-width:400px;
+  height:6px;background:var(--bg3);
+  border-radius:var(--radius-sm);overflow:hidden;
+  border: 1px solid var(--border);
+}
+.progress-fill{
+  height:100%;
+  background:var(--cyan);
+  width:0%;
+  transition:width .15s ease-out;
+  box-shadow:0 0 12px var(--cyan);
+}
+
+/* Console Log area */
+.terminal-log {
+  width: 100%; max-width: 400px; height: 160px;
+  background: rgba(0,0,0,.4); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 12px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+  color: var(--cyan); text-align: left; overflow-y: hidden;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.log-line { opacity: 0.8; margin-bottom: 4px; }
+.log-line.hl { color: #fff; font-weight: bold; opacity: 1; }
+
+/* ─── RESULTS PAGE ─── */
+.results-page{flex:1;padding:32px 20px 60px}
+.results-wrap{max-width:900px;margin:0 auto}
+
+.score-hero{
+  display:flex;align-items:center;justify-content:center;
+  gap:40px;
+  padding:40px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-bottom:32px;
+  flex-wrap:wrap;
+  position:relative;
+}
+.score-ring-wrap{position:relative;width:140px;height:140px;flex-shrink:0}
+.score-ring-svg{width:100%;height:100%;transform:rotate(-90deg)}
+.score-ring-bg{fill:none;stroke:var(--bg3);stroke-width:8}
+.score-ring-fill{
+  fill:none;stroke-width:8;
+  stroke-linecap:square; /* sharp cap */
+  stroke-dasharray:440;
+  stroke-dashoffset:440;
+  transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);
+}
+.score-ring-label{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;
+}
+.score-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:2.8rem;font-weight:700;
+  color:var(--text);
+  display:block;line-height:1;
+}
+.score-of{font-size:.75rem;color:var(--muted);margin-top:6px; font-family:'JetBrains Mono',monospace; text-transform:uppercase;}
+.score-meta{flex:1;min-width:200px}
+.score-title{font-size:1.4rem;font-weight:700;margin-bottom:12px; font-family:'JetBrains Mono',monospace;}
+.score-verdict{
+  font-size:.95rem;color:var(--muted);line-height:1.6;
+  padding:16px;
+  background:var(--bg3);border-radius:var(--radius-sm);
+  border-left:4px solid var(--cyan);
+}
+
+.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:20px;margin-bottom:32px}
+.metric-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:24px;
+  position:relative;
+  transition:all var(--transition);
+}
+.metric-card:hover{border-color:var(--cyan);background:var(--card-b);}
+.metric-card::before{
+  content:'';position:absolute;top:0;left:0;width:4px;height:100%;
+  background:var(--cyan); opacity:0.5;
+}
+.metric-icon{font-size:1.5rem;margin-bottom:12px; opacity:0.8;}
+.metric-label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;font-weight:600;}
+.metric-val{
+  font-family:'JetBrains Mono',monospace;
+  font-size:2.2rem;font-weight:700;
+  line-height:1;margin-bottom:6px;
+}
+.metric-unit{font-size:.85rem;color:var(--muted);font-family:'Space Grotesk',sans-serif}
+.metric-bar{height:6px;background:var(--bg3);border-radius:var(--radius-sm);margin-top:20px;overflow:hidden}
+.metric-bar-fill{height:100%;transition:width 1s ease .2s}
+
+/* Ping chart */
+.ping-chart{
+  display:flex;align-items:flex-end;gap:4px;
+  height:40px;margin-top:16px;
+}
+.ping-bar{
+  flex:1;background:rgba(0,210,255,.4);
+  position:relative;transition:height .4s ease;
+  min-height:4px;
+}
+.ping-bar.hi{background:rgba(245,158,11,.6)}
+.ping-bar.very-hi{background:rgba(239,68,68,.6)}
+
+/* Services */
+.services-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);padding:32px;
+  margin-bottom:32px;
+}
+.section-title{
+  font-size:1.1rem;font-weight:600;
+  margin-bottom:24px; font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:12px;
+}
+.services-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;
+}
+.service-item{
+  display:flex;align-items:center;gap:12px;
+  padding:14px;
+  background:var(--bg3);border-radius:var(--radius-sm);
+  font-size:.9rem;
+  border:1px solid var(--border);
+  transition:all .2s;
+}
+.service-item:hover{border-color:var(--cyan);background:var(--card-b)}
+.service-dot{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;
+}
+.service-dot.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
+.service-dot.slow{background:var(--yellow);box-shadow:0 0 8px var(--yellow)}
+.service-dot.fail{background:var(--red);box-shadow:0 0 8px var(--red)}
+.service-name{flex:1;font-weight:500}
+.service-ping{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--muted)}
+
+.retest-btn, .share-btn{
+  display:inline-flex;align-items:center;justify-content:center; gap:10px;
+  padding:16px 32px;
+  font-weight:600;font-size:1rem;
+  border-radius:var(--radius);
+  transition:all .2s;
+  font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;
+  margin-bottom: 12px;
+}
+.retest-btn{
+  background:var(--bg3); border:1px solid var(--border); color:var(--text);
+  margin-right:16px;
+}
+.retest-btn:hover{background:var(--card-b);border-color:var(--cyan);}
+.share-btn{
+  background:rgba(0,210,255,.1); border:1px solid var(--cyan); color:var(--cyan);
+}
+.share-btn:hover{background:rgba(0,210,255,.2); box-shadow:0 0 16px rgba(0,210,255,.2);}
+
+/* ─── 404 PAGE ─── */
+.page-404{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:60px 24px;text-align:center;
+  gap:24px;
+}
+.glitch-404{
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(5rem,15vw,10rem);
+  font-weight:700;
+  line-height:1;
+  color:var(--cyan);
+  text-shadow:0 0 40px rgba(0,210,255,.4);
+}
+.err-title{font-size:1.5rem;font-weight:600; font-family:'JetBrains Mono',monospace;}
+.err-sub{font-size:1rem;color:var(--muted);max-width:400px;line-height:1.6}
+
+/* ─── FOOTER ─── */
+footer{
+  border-top:1px solid var(--border);
+  padding:24px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:16px;
+  font-size:.85rem;color:var(--muted);
+  background: var(--bg2);
+}
+.footer-brand{font-family:'JetBrains Mono',monospace;color:var(--cyan);font-weight:600;}
+
+/* ─── STATUS TAGS ─── */
+.tag{
+  display:inline-block;padding:4px 10px;border-radius:var(--radius-sm);
+  font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+  font-family:'JetBrains Mono',monospace;
+}
+.tag-ok{background:rgba(34,197,94,.15);color:var(--green)}
+.tag-slow{background:rgba(245,158,11,.15);color:var(--yellow)}
+.tag-fail{background:rgba(239,68,68,.15);color:var(--red)}
+
+/* ─── TOAST (MISSING IN ORIGINAL) ─── */
+.toast{
+  position:fixed;bottom:32px;right:32px;
+  background:var(--bg3);border:1px solid var(--cyan);
+  border-radius:var(--radius);padding:16px 24px;
+  font-size:.9rem; font-weight: 500; font-family:'JetBrains Mono',monospace;
+  color:var(--text);
+  box-shadow:0 8px 32px rgba(0,0,0,.5), 0 0 16px rgba(0,210,255,.2);
+  transform:translateY(100px);opacity:0;
+  transition:all .3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index:9999;
+  display:flex;align-items:center;gap:12px;
+}
+.toast.show{transform:translateY(0);opacity:1}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:600px){
+  nav{padding:16px}
+  .score-hero{padding:24px;gap:20px; flex-direction:column; text-align:center;}
+  .score-meta { min-width: 100%; }
+  .score-ring-wrap{width:120px;height:120px}
+  .score-num{font-size:2.2rem}
+  .services-grid, .grid-3 {grid-template-columns:1fr;} /* Better on mobile */
+  .hero-stats{padding: 20px; gap:20px;}
+  .retest-btn, .share-btn { width: 100%; margin-right:0; }
+  .terminal-log { height: 120px; }
+}
+
+/* ─── UTILS ─── */
+.c-green{color:var(--green)}
+.c-yellow{color:var(--yellow)}
+.c-red{color:var(--red)}
+.c-cyan{color:var(--cyan)}
+</style>
+</head>
+<body>
+
+<!-- ===================== HOME PAGE ===================== -->
+<div class="page active" id="page-home">
+  <nav>
+    <div class="nav-brand">
+      <div class="brand-icon">ID</div>
+      InterDet
+    </div>
+    <div class="nav-right">
+      <button class="theme-btn" id="theme-toggle" title="Toggle theme">🌙</button>
+      <select class="lang-select" id="lang-select">
+        <option value="en">EN</option>
+        <option value="ru">RU</option>
+        <option value="es">ES</option>
+        <option value="de">DE</option>
+        <option value="fr">FR</option>
+        <option value="tr">TR</option>
+        <option value="pl">PL</option>
+        <option value="uk">UA</option>
+      </select>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="badge"><span class="badge-dot"></span><span data-i18n="badge">Network Diagnostic Tool</span></div>
+    <h1 data-i18n="hero_h1">Know Your<br/><span>Internet's Truth</span></h1>
+    <p class="subtitle" data-i18n="hero_sub">Full-spectrum analysis — speed, latency, stability, and service availability. One click reveals everything about your connection.</p>
+    <button class="cta-btn" id="start-btn">
+      <span data-i18n="start_btn">Start Scan</span>
+      <span class="cta-arrow">→</span>
+    </button>
+    <div class="hero-stats">
+      <div class="h-stat">
+        <div class="h-stat-val">10+</div>
+        <div class="h-stat-label" data-i18n="stat_services">Services</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-val">4</div>
+        <div class="h-stat-label" data-i18n="stat_tests">Modules</div>
+      </div>
+      <div class="h-stat">
+        <div class="h-stat-val">~5s</div>
+        <div class="h-stat-label" data-i18n="stat_time">Duration</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span class="footer-brand">InterDet v3.0</span>
+    <span data-i18n="footer_copy">No login. No data stored. Pure diagnostics.</span>
+  </footer>
+</div>
+
+<!-- ===================== LOADING PAGE ===================== -->
+<div class="page" id="page-loading">
+  <nav>
+    <div class="nav-brand">
+      <div class="brand-icon">ID</div>
+      InterDet
+    </div>
+    <div class="nav-right">
+      <button class="theme-btn" id="theme-toggle-2">🌙</button>
+    </div>
+  </nav>
+
+  <div class="loading-page">
+    <div class="loader-ascii">
+[■■■       ]
+    </div>
+    <div class="loading-label" id="loading-phase" data-i18n="loading_init">INITIALIZING SCAN</div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+    <div class="terminal-log" id="terminal-log">
+      <!-- Live logs injected here -->
+    </div>
+  </div>
+</div>
+
+<!-- ===================== RESULTS PAGE ===================== -->
+<div class="page" id="page-results">
+  <nav>
+    <div class="nav-brand">
+      <div class="brand-icon">ID</div>
+      InterDet
+    </div>
+    <div class="nav-right">
+      <button class="theme-btn" id="theme-toggle-3">🌙</button>
+      <select class="lang-select" id="lang-select-2">
+        <option value="en">EN</option>
+        <option value="ru">RU</option>
+      </select>
+    </div>
+  </nav>
+
+  <div class="results-page">
+    <div class="results-wrap">
+
+      <!-- OVERALL SCORE -->
+      <div class="score-hero" id="score-hero">
+        <div class="score-ring-wrap">
+          <svg class="score-ring-svg" viewBox="0 0 160 160">
+            <circle class="score-ring-bg" cx="80" cy="80" r="70"/>
+            <circle class="score-ring-fill" id="score-ring-fill" cx="80" cy="80" r="70"/>
+          </svg>
+          <div class="score-ring-label">
+            <span class="score-num" id="score-num">—</span>
+            <div class="score-of" data-i18n="out_of">out of 100</div>
+          </div>
+        </div>
+        <div class="score-meta">
+          <div class="score-title" id="score-title" data-i18n="score_title">Connection Health</div>
+          <div class="score-verdict" id="score-verdict"></div>
+        </div>
+      </div>
+
+      <!-- METRIC CARDS -->
+      <div class="grid-3" id="metrics-grid"></div>
+
+      <!-- SERVICES -->
+      <div class="services-card">
+        <div class="section-title">
+          <span style="color:var(--cyan)">>_</span>
+          <span data-i18n="services_title">Service Availability</span>
+        </div>
+        <div class="services-grid" id="services-grid"></div>
+      </div>
+
+      <!-- ACTIONS -->
+      <div>
+        <button class="retest-btn" id="retest-btn">
+          <span>[↺]</span> <span data-i18n="retest">Run Again</span>
+        </button>
+        <button class="share-btn" id="share-btn">
+          <span>[↑]</span> <span data-i18n="share">Copy Score</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    <span class="footer-brand">InterDet v3.0</span>
+    <span data-i18n="footer_copy">No login. No data stored. Pure diagnostics.</span>
+  </footer>
+</div>
+
+<!-- ===================== 404 PAGE ===================== -->
+<div class="page" id="page-404">
+  <nav>
+    <div class="nav-brand"><div class="brand-icon">ID</div>InterDet</div>
+  </nav>
+  <div class="page-404">
+    <div class="glitch-404">404</div>
+    <div class="err-title" data-i18n="err_title">Signal Lost</div>
+    <div class="err-sub" data-i18n="err_sub">This page drifted into the network void.</div>
+    <button class="cta-btn" onclick="showPage('home')">
+      <span data-i18n="go_home">Go Home</span>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== TOAST ===================== -->
+<div class="toast" id="toast">
+  <span id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   i18n STRINGS
+═══════════════════════════════════════════════════════════════ */
+const STRINGS = {
+  en:{
+    badge:"Network Diagnostic Tool",
+    hero_h1:"Know Your\n<span>Internet's Truth</span>",
+    hero_sub:"Full-spectrum analysis — speed, latency, stability, and service availability.",
+    start_btn:"Start Scan",
+    stat_services:"Services Checked",
+    stat_tests:"Test Modules",
+    stat_time:"Duration",
+    footer_copy:"No login. No data stored. Pure diagnostics.",
+    loading_init:"INITIALIZING...",
+    loading_speed:"MEASURING BANDWIDTH...",
+    loading_ping:"ANALYZING LATENCY...",
+    loading_stability:"TESTING STABILITY...",
+    loading_services:"PROBING SERVICES...",
+    loading_score:"COMPUTING SCORE...",
+    out_of:"out of 100",
+    score_title:"Connection Health",
+    services_title:"Service Availability",
+    retest:"Run Again",
+    share:"Copy Score",
+    go_home:"Return Home",
+    err_title:"Signal Lost",
+    err_sub:"The requested packet never arrived at its destination.",
+    speed_label:"Download Speed",
+    ping_label:"Average Ping",
+    stab_label:"Stability Index",
+    score_excellent:"Connection is rock solid. Excellent speed, low latency, optimal routing.",
+    score_good:"Connection is stable with minor fluctuations. Suitable for all tasks.",
+    score_fair:"Moderate quality. Some routing nodes might be congested.",
+    score_poor:"Routing instability detected. Potential packet loss.",
+    score_bad:"Critical connectivity issues. High packet loss and unreachable nodes.",
+    copied:"Score copied to clipboard!",
+    ms:"ms", mbps:"Mbps", pct:"%",
+    ok:"OK", slow:"SLOW", fail:"FAIL",
+    speed_score:"Speed Score", ping_score:"Ping Score", stab_score:"Stability Score",
+  },
+  ru:{
+    badge:"Сетевая диагностика",
+    hero_h1:"Узнай правду\n<span>о своём интернете</span>",
+    hero_sub:"Полный анализ — скорость, задержка, стабильность и доступность сервисов.",
+    start_btn:"Начать скан",
+    stat_services:"Сервисов",
+    stat_tests:"Модулей",
+    stat_time:"Время",
+    footer_copy:"Без авторизации. Без сбора данных. Только диагностика.",
+    loading_init:"ИНИЦИАЛИЗАЦИЯ...",
+    loading_speed:"ЗАМЕР ПРОПУСКНОЙ СПОСОБНОСТИ...",
+    loading_ping:"АНАЛИЗ ЗАДЕРЖКИ...",
+    loading_stability:"ПРОВЕРКА СТАБИЛЬНОСТИ...",
+    loading_services:"ОПРОС СЕРВИСОВ...",
+    loading_score:"ВЫЧИСЛЕНИЕ РЕЙТИНГА...",
+    out_of:"из 100",
+    score_title:"Состояние сети",
+    services_title:"Доступность узлов",
+    retest:"Повторить",
+    share:"Скопировать",
+    go_home:"На главную",
+    err_title:"Сигнал потерян",
+    err_sub:"Пакет так и не достиг пункта назначения.",
+    speed_label:"Скорость скачивания",
+    ping_label:"Средний Ping",
+    stab_label:"Индекс стабильности",
+    score_excellent:"Соединение монолитно. Отличная скорость, низкий пинг, оптимальный роутинг.",
+    score_good:"Соединение стабильно с небольшими колебаниями. Подходит для любых задач.",
+    score_fair:"Умеренное качество. Возможна загруженность на некоторых узлах маршрута.",
+    score_poor:"Обнаружена нестабильность роутинга. Возможна потеря пакетов.",
+    score_bad:"Критическая проблема со связью. Высокая потеря пакетов.",
+    copied:"Результат скопирован!",
+    ms:"мс", mbps:"Мбит/с", pct:"%",
+    ok:"ОК", slow:"МЕДЛ.", fail:"СБОЙ",
+    speed_score:"Оценка скорости", ping_score:"Оценка пинга", stab_score:"Оценка стаб-ти",
+  },
+  es:{
+    badge:"Herramienta de diagnóstico",
+    hero_h1:"Conoce la verdad\n<span>de tu Internet</span>",
+    hero_sub:"Análisis completo: velocidad, latencia, estabilidad y disponibilidad del servicio.",
+    start_btn:"Iniciar escaneo",
+    stat_services:"Servicios", stat_tests:"Módulos", stat_time:"Duración",
+    footer_copy:"Sin registro. Sin almacenamiento de datos. Diagnóstico puro.",
+    loading_init:"INICIALIZANDO...", loading_speed:"MIDIENDO ANCHO DE BANDA...",
+    loading_ping:"ANALIZANDO LATENCIA...", loading_stability:"PROBANDO ESTABILIDAD...",
+    loading_services:"PROBANDO SERVICIOS...", loading_score:"CALCULANDO PUNTUACIÓN...",
+    out_of:"de 100", score_title:"Salud de la conexión", services_title:"Disponibilidad del servicio",
+    retest:"Repetir", share:"Copiar resultado", go_home:"Inicio",
+    err_title:"Señal perdida", err_sub:"El paquete no llegó a su destino.",
+    speed_label:"Velocidad de descarga", ping_label:"Ping promedio", stab_label:"Índice de estabilidad",
+    score_excellent:"Conexión excelente. Alta velocidad, baja latencia y enrutamiento óptimo.",
+    score_good:"Conexión estable con fluctuaciones menores. Adecuada para todo.",
+    score_fair:"Calidad moderada. Algunos nodos pueden estar congestionados.",
+    score_poor:"Inestabilidad detectada. Posible pérdida de paquetes.",
+    score_bad:"Problemas críticos de conectividad. Alta pérdida de paquetes.",
+    copied:"¡Copiado al portapapeles!", ms:"ms", mbps:"Mbps", pct:"%", ok:"OK", slow:"LENTO", fail:"ERROR"
+  },
+  de:{
+    badge:"Netzwerk-Diagnosetool",
+    hero_h1:"Erfahre die Wahrheit\n<span>über dein Internet</span>",
+    hero_sub:"Vollständige Analyse — Geschwindigkeit, Latenz, Stabilität und Dienstverfügbarkeit.",
+    start_btn:"Scan Starten",
+    stat_services:"Dienste", stat_tests:"Module", stat_time:"Dauer",
+    footer_copy:"Kein Login. Keine Datenspeicherung. Reine Diagnostik.",
+    loading_init:"INITIALISIERUNG...", loading_speed:"BANDBREITE WIRD GEMESSEN...",
+    loading_ping:"LATENZ WIRD ANALYSIERT...", loading_stability:"STABILITÄT WIRD GEPRÜFT...",
+    loading_services:"DIENSTE WERDEN GEPRÜFT...", loading_score:"SCORE WIRD BERECHNET...",
+    out_of:"von 100", score_title:"Verbindungsstatus", services_title:"Dienstverfügbarkeit",
+    retest:"Wiederholen", share:"Score kopieren", go_home:"Zur Startseite",
+    err_title:"Signal verloren", err_sub:"Das angeforderte Paket ist nie angekommen.",
+    speed_label:"Download-Geschwindigkeit", ping_label:"Durchschnittlicher Ping", stab_label:"Stabilitätsindex",
+    score_excellent:"Hervorragende Verbindung. Hohe Geschwindigkeit, niedriger Ping.",
+    score_good:"Stabile Verbindung mit geringen Schwankungen.",
+    score_fair:"Moderate Qualität. Einige Knoten könnten überlastet sein.",
+    score_poor:"Routing-Instabilität erkannt. Möglicher Paketverlust.",
+    score_bad:"Kritische Verbindungsprobleme. Hoher Paketverlust.",
+    copied:"In Zwischenablage kopiert!", ms:"ms", mbps:"Mbit/s", pct:"%", ok:"OK", slow:"LANGSAM", fail:"FEHLER"
+  },
+  fr:{
+    badge:"Outil de diagnostic réseau",
+    hero_h1:"Distinguez la vérité\n<span>de votre Internet</span>",
+    hero_sub:"Analyse complète — vitesse, latence, stabilité et disponibilité des services.",
+    start_btn:"Lancer le scan",
+    stat_services:"Services", stat_tests:"Modules", stat_time:"Durée",
+    footer_copy:"Sans connexion. Aucune donnée stockée. Diagnostic pur.",
+    loading_init:"INITIALISATION...", loading_speed:"MESURE DE LA BANDE PASSANTE...",
+    loading_ping:"ANALYSE DE LA LATENCE...", loading_stability:"TEST DE STABILITÉ...",
+    loading_services:"ANALYSE DES SERVICES...", loading_score:"CALCUL DU SCORE...",
+    out_of:"sur 100", score_title:"Santé de la connexion", services_title:"Disponibilité des services",
+    retest:"Relancer", share:"Copier le score", go_home:"Accueil",
+    err_title:"Signal perdu", err_sub:"Le paquet demandé n'est jamais arrivé.",
+    speed_label:"Vitesse de téléchargement", ping_label:"Ping moyen", stab_label:"Indice de stabilité",
+    score_excellent:"Connexion excellente. Vitesse élevée, faible latence.",
+    score_good:"Connexion stable avec des fluctuations mineures.",
+    score_fair:"Qualité modérée. Certains nœuds peuvent être encombrés.",
+    score_poor:"Instabilité détectée. Perte de paquets potentielle.",
+    score_bad:"Problèmes de connectivité critiques. Forte perte de paquets.",
+    copied:"Copié dans le presse-papiers !", ms:"ms", mbps:"Mbit/s", pct:"%", ok:"OK", slow:"LENT", fail:"ÉCHEC"
+  },
+  tr:{
+    badge:"Ağ Teşhis Aracı",
+    hero_h1:"İnternetinizin\n<span>Gerçeğini Öğrenin</span>",
+    hero_sub:"Tam kapsamlı analiz — hız, gecikme, kararlılık ve hizmet kullanılabilirliği.",
+    start_btn:"Taramayı Başlat",
+    stat_services:"Servisler", stat_tests:"Modüller", stat_time:"Süre",
+    footer_copy:"Giriş yok. Veri depolama yok. Saf teşhis.",
+    loading_init:"BAŞLATILIYOR...", loading_speed:"BANT GENİŞLİĞİ ÖLÇÜLÜYOR...",
+    loading_ping:"GECİKME ANALİZ EDİLİYOR...", loading_stability:"KARARLILIK TEST EDİLİYOR...",
+    loading_services:"SERVİSLER DENETLENİYOR...", loading_score:"SKOR HESAPLANIYOR...",
+    out_of:"/ 100", score_title:"Bağlantı Sağlığı", services_title:"Servis Kullanılabilirliği",
+    retest:"Yeniden Test Et", share:"Skoru Kopyala", go_home:"Ana Sayfa",
+    err_title:"Sinyal Kayboldu", err_sub:"İstenen paket hedefine ulaşamadı.",
+    speed_label:"İndirme Hızı", ping_label:"Ortalama Ping", stab_label:"Kararlılık Endeksi",
+    score_excellent:"Bağlantı mükemmel. Yüksek hız, düşük gecikme, harika yönlendirme.",
+    score_good:"Bağlantı kararlı, küçük dalgalanmalar var.",
+    score_fair:"Orta kalite. Bazı yönlendirme düğümleri yoğun olabilir.",
+    score_poor:"Yönlendirme istikrarsızlığı tespit edildi. Olası paket kaybı.",
+    score_bad:"Kritik bağlantı sorunları. Yüksek paket kaybı.",
+    copied:"Panoya kopyalandı!", ms:"ms", mbps:"Mbps", pct:"%", ok:"OK", slow:"YAVAŞ", fail:"HATA"
+  },
+  pl:{
+    badge:"Narzędzie diagnostyczne",
+    hero_h1:"Poznaj prawdę o\n<span>swoim internecie</span>",
+    hero_sub:"Pełna analiza — prędkość, opóźnienie, stabilność i dostępność usług.",
+    start_btn:"Uruchom skan",
+    stat_services:"Usługi", stat_tests:"Moduły", stat_time:"Czas",
+    footer_copy:"Bez logowania. Brak przechowywania danych. Czysta diagnostyka.",
+    loading_init:"INICJOWANIE...", loading_speed:"POMIAR PRĘDKOŚCI...",
+    loading_ping:"ANALIZA OPÓŹNIENIA...", loading_stability:"TEST STABILNOŚCI...",
+    loading_services:"SPRAWDZANIE USŁUG...", loading_score:"OBLICZANIE WYNIKU...",
+    out_of:"na 100", score_title:"Stan połączenia", services_title:"Dostępność usług",
+    retest:"Ponów test", share:"Kopiuj wynik", go_home:"Główna",
+    err_title:"Sygnał utracony", err_sub:"Żądany pakiet nie dotarł do celu.",
+    speed_label:"Prędkość pobierania", ping_label:"Średni Ping", stab_label:"Indeks stabilności",
+    score_excellent:"Połączenie jest stabilne jak skała. Świetna prędkość, niski ping.",
+    score_good:"Połączenie stabilne z niewielkimi wahaniami.",
+    score_fair:"Umiarkowana jakość. Niektóre węzły mogą być przeciążone.",
+    score_poor:"Wykryto niestabilność routingu. Możliwa utrata pakietów.",
+    score_bad:"Krytyczne problemy z łącznością. Wysoka utrata pakietów.",
+    copied:"Skopiowano do schowka!", ms:"ms", mbps:"Mb/s", pct:"%", ok:"OK", slow:"WOLNO", fail:"BŁĄD"
+  },
+  uk:{
+    badge:"Інструмент діагностики",
+    hero_h1:"Дізнайся правду\n<span>про свій інтернет</span>",
+    hero_sub:"Повний аналіз — швидкість, затримка, стабільність та доступність сервісів.",
+    start_btn:"Почати скан",
+    stat_services:"Сервісів", stat_tests:"Модулів", stat_time:"Час",
+    footer_copy:"Без авторизації. Без збору даних. Тільки діагностика.",
+    loading_init:"ІНІЦІАЛІЗАЦІЯ...", loading_speed:"ВИМІРЮВАННЯ ШВИДКОСТІ...",
+    loading_ping:"АНАЛІЗ ЗАТРИМКИ...", loading_stability:"ПЕРЕВІРКА СТАБІЛЬНОСТІ...",
+    loading_services:"ОПИТУВАННЯ СЕРВІСІВ...", loading_score:"ОБЧИСЛЕННЯ РЕЙТИНГУ...",
+    out_of:"із 100", score_title:"Стан з'єднання", services_title:"Доступність вузлів",
+    retest:"Повторити", share:"Скопіювати", go_home:"На головну",
+    err_title:"Сигнал втрачено", err_sub:"Пакет так і не досяг пункту призначення.",
+    speed_label:"Швидкість завантаження", ping_label:"Середній Ping", stab_label:"Індекс стабільності",
+    score_excellent:"З'єднання монолітне. Відмінна швидкість, низький пінг, оптимальний роутінг.",
+    score_good:"З'єднання стабільне з невеликими коливаннями.",
+    score_fair:"Помірна якість. Можлива завантаженість деяких вузлів.",
+    score_poor:"Виявлено нестабільність роутінгу. Можлива втрата пакетів.",
+    score_bad:"Критичні проблеми зі зв'язком. Висока втрата пакетів.",
+    copied:"Результат скопійовано!", ms:"мс", mbps:"Мбіт/с", pct:"%", ok:"ОК", slow:"МЕДЛ.", fail:"СБІЙ"
+  }
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   STATE & CONSTANTS
+═══════════════════════════════════════════════════════════════ */
+let lang = 'en';
+let theme = 'dark';
+let testResults = null;
+let logLines = [];
+
+const SERVICES = [
+  {name:'Yandex',    icon:'🔴', url:'https://ya.ru'},
+  {name:'Google',    icon:'⬛', url:'https://www.google.com'},
+  {name:'YouTube',   icon:'▶',  url:'https://www.youtube.com'},
+  {name:'Discord',   icon:'💬', url:'https://discord.com'},
+  {name:'Telegram',  icon:'✈',  url:'https://web.telegram.org'},
+  {name:'GitHub',    icon:'⚙',  url:'https://github.com'},
+  {name:'Cloudflare',icon:'🔒', url:'https://1.1.1.1'},
+];
+
+function setLang(l){
+  lang = l;
+  document.querySelectorAll('.lang-select').forEach(s => s.value = l);
+  applyStrings();
+  if (testResults) renderResults();
+}
+
+function t(key){ return (STRINGS[lang]||STRINGS['en'])[key] || key; }
+
+function applyStrings(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    const text = t(el.getAttribute('data-i18n'));
+    if (text.includes('\n') || text.includes('<span>')) {
+      el.innerHTML = text.replace(/\n/g, '<br/>');
+    } else {
+      el.textContent = text;
+    }
+  });
+}
+
+function setTheme(th){
+  theme = th;
+  document.documentElement.setAttribute('data-theme', th);
+  document.querySelectorAll('.theme-btn').forEach(b=>b.textContent=th==='dark'?'🌙':'☀️');
+}
+
+function toggleTheme(){ setTheme(theme==='dark'?'light':'dark'); }
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+}
+
+function addLog(msg, highlight=false) {
+  const terminal = document.getElementById('terminal-log');
+  const time = new Date().toISOString().substring(11,19);
+  logLines.push(`<div class="log-line ${highlight?'hl':''}"><span style="color:var(--muted)">[${time}]</span> ${msg}</div>`);
+  if(logLines.length > 8) logLines.shift();
+  terminal.innerHTML = logLines.join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REAL-TIME MEASUREMENT ENGINE (CLOUDFLARE API)
+═══════════════════════════════════════════════════════════════ */
+function rand(min,max){ return min + Math.random()*(max-min); }
+function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+// 1. ЧЕСТНЫЙ ПИНГ (С фиксом CORS)
+async function runPingTest(){
+  const pings=[];
+  for(let i=0;i<5;i++){
+    const t0=performance.now();
+    try {
+      // Возвращаем mode: 'no-cors', иначе браузер жестко блокирует запрос.
+      // Добавлен параметр ?t= для стопроцентного обхода кэширования браузера.
+      await fetch(`https://1.1.1.1/cdn-cgi/trace?t=${performance.now()}`, { mode: 'no-cors', cache: 'no-store' });
+    } catch(e) {
+      addLog(`> icmp_seq=${i} FAIL`, true);
+      continue;
+    }
+    const dt = performance.now() - t0;
+    const p = Number(dt.toFixed(1));
+    pings.push(p);
+    addLog(`> icmp_seq=${i} time=${p} ms`);
+    await delay(100);
+  }
+  return pings.length > 0 ? pings : [999];
+}
+
+// 2. ЧЕСТНЫЕ СЕРВИСЫ
+async function probeService(svc){
+  const t0=performance.now();
+  let ok=false;
+  try{
+    await fetch(svc.url, { mode:'no-cors', cache:'no-store' });
+    ok=true;
+  }catch(e){ ok=false; }
+  const ms = performance.now() - t0;
+  const status = !ok ? 'fail' : ms>500 ? 'slow' : 'ok';
+  addLog(`> HTTP GET ${svc.name} ... [${status.toUpperCase()}] ${ms.toFixed(0)}ms`, status==='fail');
+  return {name:svc.name, icon:svc.icon, ms:Math.round(ms), status};
+}
+
+const asciiFrames = ['[■□□□□□□□□□]','[■■■□□□□□□□]','[■■■■■□□□□□]','[■■■■■■■□□□]','[■■■■■■■■■□]','[■■■■■■■■■■]'];
+
+// 3. ГЛАВНАЯ ФУНКЦИЯ ТЕСТА С ЗАЩИТОЙ ОТ ЗАВИСАНИЙ
+async function runTest(){
+  showPage('loading');
+  logLines = [];
+  const fill=document.getElementById('progress-fill');
+  const phase=document.getElementById('loading-phase');
+  const asciiEl=document.querySelector('.loader-ascii');
+
+  function setProgress(pct, phaseKey, frameIdx){
+    fill.style.width=pct+'%';
+    phase.textContent=t(phaseKey);
+    if(frameIdx!==undefined) asciiEl.textContent = asciiFrames[frameIdx];
+  }
+
+  addLog('Initializing real network diagnostic...', true);
+  setProgress(5,'loading_init', 0);
+  await delay(200);
+
+  // === ЗАМЕР СКОРОСТИ ===
+  addLog('Connecting to Cloudflare Speed Test...');
+  setProgress(15,'loading_speed', 1);
+  let speedMbps = 0;
+
+  try {
+    const payloadSize = 5 * 1024 * 1024; // Запрашиваем 5 МБ
+    addLog(`Downloading ${(payloadSize/1024/1024).toFixed(1)}MB test payload...`);
+
+    const t0 = performance.now();
+
+    // AbortController прервет запрос через 10 секунд, если интернет слишком медленный,
+    // чтобы сайт не висел вечно.
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const resp = await fetch(`https://speed.cloudflare.com/__down?bytes=${payloadSize}`, {
+      cache: 'no-store',
+      signal: controller.signal
+    });
+
+    const blob = await resp.blob(); // Дожидаемся реальной загрузки 5МБ
+    const t1 = performance.now();
+    clearTimeout(timeoutId);
+
+    const durationSeconds = (t1 - t0) / 1000;
+    const bitsLoaded = blob.size * 8; // Перевод в биты
+    speedMbps = (bitsLoaded / durationSeconds) / 1000000; // Перевод в Мбит/с
+
+    addLog(`> Payload downloaded in ${durationSeconds.toFixed(2)}s`);
+  } catch(e) {
+    addLog(`> Bandwidth test blocked/timeout: ${e.message}`, true);
+    speedMbps = 0;
+  }
+
+  addLog(`Actual Download Speed: ${speedMbps.toFixed(2)} Mbps`, true);
+  setProgress(30,'loading_speed', 2);
+  await delay(200);
+
+  // === ПИНГ ===
+  setProgress(35,'loading_ping', 3);
+  const pings = await runPingTest();
+  const avgPing = pings.reduce((a,b)=>a+b,0)/pings.length;
+  addLog(`Average latency: ${avgPing.toFixed(1)} ms`, true);
+  setProgress(55,'loading_ping', 4);
+  await delay(150);
+
+  // === СТАБИЛЬНОСТЬ ===
+  setProgress(60,'loading_stability', 4);
+  const jitter=Math.max(...pings)-Math.min(...pings);
+  const stability=Math.max(0,Math.min(100,100-jitter/avgPing*40));
+  addLog(`Jitter calculated: ${jitter.toFixed(1)} ms (Stability: ${stability.toFixed(1)}%)`);
+  setProgress(72,'loading_stability', 4);
+  await delay(150);
+
+  // === СЕРВИСЫ ===
+  setProgress(75,'loading_services', 5);
+  const serviceResults=[];
+  for(const svc of SERVICES){
+    serviceResults.push(await probeService(svc));
+  }
+
+  addLog('Aggregating network data...', true);
+  setProgress(93,'loading_services', 5);
+  await delay(200);
+
+  // === РАСЧЕТ ИТОГОВ ===
+  setProgress(98,'loading_score', 5);
+  const okCount=serviceResults.filter(s=>s.status==='ok').length;
+  const slowCount=serviceResults.filter(s=>s.status==='slow').length;
+
+  const speedScore = Math.min(100,Math.round(speedMbps>200?100:speedMbps>100?90:speedMbps>50?80:speedMbps>20?65:40));
+  const pingScore = Math.min(100,Math.round(avgPing<20?100:avgPing<50?90:avgPing<100?78:avgPing<200?60:30));
+  const stabScore = Math.round(stability);
+  const svcScore = Math.round((okCount*10+slowCount*5)/(SERVICES.length*10)*100);
+
+  testResults={
+    speedMbps:Math.round(speedMbps*10)/10, avgPing:Math.round(avgPing), stability:Math.round(stability),
+    pings, services:serviceResults, speedScore, pingScore, stabScore,
+    overall: Math.round(speedScore*.3 + pingScore*.25 + stabScore*.2 + svcScore*.25)
+  };
+
+  setProgress(100,'loading_score', 5);
+  addLog('DIAGNOSTICS COMPLETE. Rendering UI...', true);
+  await delay(300);
+  renderResults();
+  showPage('results');
+}
+
+/* ─── RENDER RESULTS ─── */
+function renderResults(){
+  const r=testResults;
+  const fill=document.getElementById('score-ring-fill');
+  const score=r.overall;
+  let ringColor = score>=80 ? '#22C55E' : score>=60 ? '#00D2FF' : score>=40 ? '#F59E0B' : '#EF4444';
+  
+  fill.style.stroke=ringColor;
+  document.getElementById('score-num').textContent=score;
+  setTimeout(()=>{ fill.style.strokeDashoffset = 440-(440*score/100); },100);
+
+  let vKey = score>=85 ? 'score_excellent' : score>=70 ? 'score_good' : score>=50 ? 'score_fair' : score>=30 ? 'score_poor' : 'score_bad';
+  document.getElementById('score-verdict').textContent=t(vKey);
+
+  const maxPing=Math.max(...r.pings);
+  document.getElementById('metrics-grid').innerHTML=`
+    <div class="metric-card"><div class="metric-icon">⚡</div><div class="metric-label">${t('speed_label')}</div>
+      <div class="metric-val c-cyan">${r.speedMbps}</div><div class="metric-unit">${t('mbps')}</div>
+      <div class="metric-bar"><div class="metric-bar-fill" style="width:${Math.min(100,r.speedMbps/5)}%;background:var(--cyan)"></div></div>
+    </div>
+    <div class="metric-card"><div class="metric-icon">📡</div><div class="metric-label">${t('ping_label')}</div>
+      <div class="metric-val ${r.avgPing<80?'c-green':r.avgPing<200?'c-yellow':'c-red'}">${r.avgPing}</div><div class="metric-unit">${t('ms')}</div>
+      <div class="ping-chart">${r.pings.map(p=>`<div class="ping-bar ${p>200?'very-hi':p>100?'hi':''}" style="height:${Math.min(100,Math.round(p/maxPing*100))}%"></div>`).join('')}</div>
+    </div>
+    <div class="metric-card"><div class="metric-icon">🔁</div><div class="metric-label">${t('stab_label')}</div>
+      <div class="metric-val ${r.stability>=80?'c-green':r.stability>=55?'c-yellow':'c-red'}">${r.stability}</div><div class="metric-unit">${t('pct')}</div>
+      <div class="metric-bar"><div class="metric-bar-fill" style="width:${r.stability}%;background:${r.stability>=80?'var(--green)':r.stability>=55?'var(--yellow)':'var(--red)'}"></div></div>
+    </div>
+  `;
+
+  document.getElementById('services-grid').innerHTML=r.services.map(s=>`
+    <div class="service-item">
+      <div class="service-dot ${s.status}"></div><span class="service-name">${s.icon} ${s.name}</span>
+      <span class="service-ping">${s.ms}${t('ms')}</span><span class="tag tag-${s.status}">${t(s.status)}</span>
+    </div>`).join('');
+}
+
+function showToast(msg,icon='✓'){
+  const el=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  document.getElementById('toast-icon').textContent=icon;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3000);
+}
+
+function shareScore(){
+  const r=testResults;
+  const txt=`[ InterDet Report ]\nScore: ${r.overall}/100\n⚡ ${r.speedMbps} ${t('mbps')} | 📡 ${r.avgPing}${t('ms')} | 🔁 ${r.stability}${t('pct')}`;
+  navigator.clipboard.writeText(txt).then(()=>showToast(t('copied'))).catch(()=>showToast('Error copying','×'));
+}
+
+/* ─── INIT ─── */
+(function init(){
+  setTheme('dark');
+  setLang((navigator.language||'en').slice(0,2).toLowerCase() === 'ru' ? 'ru' : 'en');
+  
+  document.getElementById('start-btn').addEventListener('click',()=>runTest().catch(console.error));
+  document.getElementById('retest-btn').addEventListener('click',()=>runTest().catch(console.error));
+  document.getElementById('share-btn').addEventListener('click',shareScore);
+  document.querySelectorAll('.theme-btn').forEach(b=>b.addEventListener('click',toggleTheme));
+  document.querySelectorAll('.lang-select').forEach(s=>s.addEventListener('change',e=>setLang(e.target.value)));
+})();
+</script>
+</body>
+</html>
