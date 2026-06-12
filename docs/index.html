@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-  <script type="text/javascript">
+<script type="text/javascript">
   (function() {
     var p = new URLSearchParams(window.location.search).get('p');
     if (p !== null) {
-      window.history.replaceState(null, null, window.location.pathname.slice(0, window.location.pathname.endsWith('/') ? -1 : undefined) + '/' + p.replace(/~and~/g, '&'));
+      var base = window.location.pathname;
+      if (base.endsWith('/')) base = base.slice(0, -1);
+      window.history.replaceState(null, null, base + '/' + p.replace(/~and~/g, '&'));
     }
   })();
 </script>
