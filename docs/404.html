@@ -1,42 +1,47 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <title>404 - InterDet</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+    <title>404 | InterDet</title>
+    <!-- Подключаем те же стили, что и в index.html, через абсолютный путь -->
+    <link rel="stylesheet" href="/style.css"/> 
     <style>
-        /* Стилизуй здесь под свой "терминальный" стиль */
-        body {
-            background: #05050A;
-            color: #E8E8F5;
-            font-family: 'Space Grotesk', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
+        .page-404 {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 80vh; text-align: center; padding: 20px;
         }
-        .glitch-404 {
-            font-size: 8rem;
-            color: #00D2FF;
-            font-family: 'JetBrains Mono', monospace;
-            text-shadow: 0 0 40px rgba(0,210,255,.4);
-        }
-        .btn-home {
-            margin-top: 20px;
-            padding: 12px 24px;
-            background: #00D2FF;
-            color: #000;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 4px;
-        }
+        .glitch-404 { font-family: 'JetBrains Mono', monospace; font-size: 10rem; color: var(--cyan); }
     </style>
 </head>
 <body>
+
+<nav>
+    <div class="nav-brand"><div class="brand-icon">ID</div> InterDet</div>
+    <div class="nav-right">
+        <button class="theme-btn" id="theme-toggle">🌙</button>
+        <select class="lang-select" id="lang-select">
+            <option value="en">EN</option>
+            <option value="ru">RU</option>
+            <option value="es">ES</option>
+            <option value="de">DE</option>
+            <option value="fr">FR</option>
+            <option value="tr">TR</option>
+            <option value="pl">PL</option>
+            <option value="uk">UA</option>
+        </select>
+    </div>
+</nav>
+
+<div class="page-404">
     <div class="glitch-404">404</div>
-    <h1>Страница не найдена</h1>
-    <p>Похоже, этот путь ведет в никуда.</p>
-    <a href="/" class="btn-home">Вернуться на главную</a>
+    <h1 class="err-title">Страница не найдена</h1>
+    <p class="err-sub">Этот путь не существует в нашей сети. Вернитесь на главную для продолжения диагностики.</p>
+    <br>
+    <a href="/" class="cta-btn">На главную</a>
+</div>
+
+<!-- Подключаем основной скрипт через абсолютный путь -->
+<script src="/main.js"></script>
 </body>
 </html>
