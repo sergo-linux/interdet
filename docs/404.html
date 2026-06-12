@@ -2,29 +2,11 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>404 - InterDet</title>
-    <style>
-      body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #000; color: #fff; }
-    </style>
-  </head>
-  <body>
-    <h1>404 - Not Found</h1>
     <script type="text/javascript">
-      // Список твоих языков
-      const supportedLangs = ['en', 'ru', 'es', 'de', 'fr', 'tr', 'pl', 'ua'];
-      const path = window.location.pathname.toLowerCase();
-      
-      // Проверяем: начинается ли путь с какого-то языка?
-      // Например: "/es" или "/es/"
-      const isRoute = supportedLangs.some(lang => path.startsWith('/' + lang));
-
-      if (isRoute) {
-        // Если это язык — редиректим в SPA
-        window.location.replace('/?p=' + path.slice(1));
-      } else {
-        // Если это не язык — оставляем пользователя на странице с 404
-        document.body.innerHTML = "<h1>404 - Not Found</h1><p>Страница не найдена</p>";
-      }
+      // Сразу перекидываем пользователя на главную, 
+      // передавая текущий путь как параметр 'p'
+      window.location.replace('/?p=' + window.location.pathname.substring(1));
     </script>
-  </body>
+  </head>
+  <body></body>
 </html>
