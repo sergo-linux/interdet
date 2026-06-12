@@ -5,9 +5,19 @@
     <title>InterDet</title>
     <script type="text/javascript">
       var l = window.location;
-      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + l.pathname.split('/').slice(0, 1).join('/') + '/?p=' + l.pathname.slice(1).replace(/&/g, '~and~') + l.search + l.hash);
+      
+      // Проверяем, есть ли имя репозитория в пути.
+      // Если мы на github.io, pathname начинается с "/имя_репозитория" (например, /interdet/es)
+      var isGithubIo = l.hostname.indexOf('github.io') !== -1;
+      var pathSegments = l.pathname.split('/');
+      
+      // Если гитхаб — берем имя репо, если свой домен — имя репо пустое
+      var repoName = isGithubIo ? '/' + pathSegments[1] : '';
+      var routePath = isGithubIo ? pathSegments.slice(2).join('/') : pathSegments.slice(1).join('/');
+      
+      // Делаем правильный редирект
+      l.replace(l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') + repoName + '/?p=' + routePath.replace(/&/g, '~and~') + l.search + l.hash);
     </script>
   </head>
-  <body>
-  </body>
+  <body></body>
 </html>
