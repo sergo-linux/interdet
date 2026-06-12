@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
+  <script type="text/javascript">
+  // Проверяем, пришел ли пользователь после редиректа с 404 страницы
+  (function() {
+    var p = new URLSearchParams(window.location.search).get('p');
+    if (p !== null) {
+      // Красиво возвращаем путь в адресную строку без перезагрузки страницы
+      window.history.replaceState(null, null, window.location.pathname.slice(0, window.location.pathname.endsWith('/') ? -1 : undefined) + '/' + p.replace(/~and~/g, '&'));
+    }
+  })();
+</script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <title>InterDet — Internet Diagnostics</title>
