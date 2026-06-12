@@ -1110,37 +1110,60 @@ function shareScore(){
   navigator.clipboard.writeText(txt).then(()=>showToast(t('copied'))).catch(()=>showToast('Error copying','×'));
 }
 
-/* ─── INIT ─── */
+/* ——— INIT ——— */
 (function init(){
   setTheme('dark');
-// 1. Наш массив поддерживаемых языков
-const supportedLangs = ['en', 'ru', 'es', 'de', 'fr', 'tr', 'pl', 'ua'];
-
-// 2. Функция умного поиска языка в URL
-function getLangFromUrl() {
-  const segments = window.location.pathname.toLowerCase().split('/');
-  // Перебираем сегменты и ищем тот, который совпадает с нашими языками
-  return segments.find(seg => supportedLangs.includes(seg)) || null;
-}
-
-// 3. Сама инициализация при старте страницы
-const urlLang = getLangFromUrl();
-
-if (urlLang) {
-  // Если в пути нашли 'es', 'ru' и т.д. — включаем его
-  setLang(urlLang);
-} else {
-  // Если в пути языка нет (просто корень сайта), включаем автоопределение по браузеру
-  let userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
-  if (userLang === 'uk') userLang = 'ua';
-  setLang(supportedLangs.includes(userLang) ? userLang : 'en');
-}
   
-  document.getElementById('start-btn').addEventListener('click',()=>runTest().catch(console.error));
-  document.getElementById('retest-btn').addEventListener('click',()=>runTest().catch(console.error));
-  document.getElementById('share-btn').addEventListener('click',shareScore);
-  document.querySelectorAll('.theme-btn').forEach(b=>b.addEventListener('click',toggleTheme));
-  document.querySelectorAll('.lang-select').forEach(s=>s.addEventListener('change',e=>setLang(e.target.value)));
+  const supportedLangs = ['en', 'ru', 'es', 'de', 'fr', 'tr', 'pl', 'ua'];
+
+  // 1. Бронебойная функция определения языка
+  function getLang() {
+    // Шаг А: Ищем язык в самом URL (например, /interdet/es)
+    const pathSegments = window.location.pathname.toLowerCase().split('/');
+    let lang = pathSegments.find(seg => supportedLangs.includes(seg));
+
+    // Шаг Б: Подстраховка для редиректа GitHub Pages с ?p=es
+    if (!lang) {
+      const p = new URLSearchParams(window.location.search).get('p');
+      if (p) lang = p.toLowerCase().split('/').find(seg => supportedLangs.includes(seg));
+    }
+
+    // Шаг В: Проверяем память браузера (если юзер уже выбирал язык ранее)
+    if (!lang) {
+      lang = localStorage.getItem('app_lang');
+    }
+
+    return lang && supportedLangs.includes(lang) ? lang : null;
+  }
+
+  // 2. Применяем язык при загрузке страницы
+  const activeLang = getLang();
+
+  if (activeLang) {
+    setLang(activeLang);
+    // Синхронизируем выпадающие списки выбора языка на странице
+    document.querySelectorAll('.lang-select').forEach(s => s.value = activeLang);
+  } else {
+    // Автоопределение по системе (если зашли первый раз)
+    let userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    if (userLang === 'uk') userLang = 'ua';
+    setLang(supportedLangs.includes(userLang) ? userLang : 'en');
+  }
+
+  // 3. Возвращаем слушатели событий для кнопок
+  document.getElementById('start-btn').addEventListener('click', ()=>runTest().catch(console.error));
+  document.getElementById('retest-btn').addEventListener('click', ()=>runTest().catch(console.error));
+  document.getElementById('share-btn').addEventListener('click', shareScore);
+  document.querySelectorAll('.theme-btn').forEach(b=>b.addEventListener('click', toggleTheme));
+  
+  // 4. ПРИ СМЕНЕ ЯЗЫКА — СОХРАНЯЕМ ЕГО В ПАМЯТЬ
+  document.querySelectorAll('.lang-select').forEach(s => {
+    s.addEventListener('change', e => {
+      const selectedLang = e.target.value;
+      setLang(selectedLang);
+      localStorage.setItem('app_lang', selectedLang); // Записываем в память браузера
+    });
+  });
 })();
 </script>
 </body>
