@@ -222,15 +222,6 @@ h1 span { color: var(--cyan); }
   padding:40px 20px;text-align:center;
   gap:24px;
 }
-.loader-ascii {
-  font-family:'JetBrains Mono',monospace;
-  color:var(--cyan);
-  font-size: 1.2rem;
-  line-height: 1;
-  white-space: pre;
-  margin-bottom: 20px;
-  text-shadow: 0 0 8px rgba(0,210,255,.5);
-}
 .loading-label{
   font-family:'JetBrains Mono',monospace;
   font-size:1rem;color:var(--text);letter-spacing:.1em;
@@ -537,9 +528,6 @@ footer{
   </nav>
 
   <div class="loading-page">
-    <div class="loader-ascii">
-[■■■       ]
-    </div>
     <div class="loading-label" id="loading-phase" data-i18n="loading_init">INITIALIZING SCAN</div>
     <div class="progress-track">
       <div class="progress-fill" id="progress-fill"></div>
@@ -967,8 +955,6 @@ async function probeService(svc){
   return {name:svc.name, icon:svc.icon, ms:Math.round(ms), status};
 }
 
-const asciiFrames = ['[■□□□□□□□□□]','[■■■□□□□□□□]','[■■■■■□□□□□]','[■■■■■■■□□□]','[■■■■■■■■■□]','[■■■■■■■■■■]'];
-
 // 3. ГЛАВНАЯ ФУНКЦИЯ ТЕСТА С ЗАЩИТОЙ ОТ ЗАВИСАНИЙ
 async function runTest(){
   showPage('loading');
@@ -977,10 +963,9 @@ async function runTest(){
   const phase=document.getElementById('loading-phase');
   const asciiEl=document.querySelector('.loader-ascii');
 
-  function setProgress(pct, phaseKey, frameIdx){
+  function setProgress(pct, phaseKey){
     fill.style.width=pct+'%';
     phase.textContent=t(phaseKey);
-    if(frameIdx!==undefined) asciiEl.textContent = asciiFrames[frameIdx];
   }
 
   addLog('Initializing real network diagnostic...', true);
