@@ -997,29 +997,53 @@ async function runTest(){
     addLog(`Downloading ${(payloadSize/1024/1024).toFixed(1)}MB test payload...`);
 
     const t0 = performance.now();
-
-    // AbortController прервет запрос через 10 секунд, если интернет слишком медленный,
-    // чтобы сайт не висел вечно.
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const resp = await fetch(`https://speed.cloudflare.com/__down?bytes=${payloadSize}`, {
+    let resp = await fetch(`https://speed.cloudflare.com/__down?bytes=${payloadSize}&r=${Math.random()}`, {
       cache: 'no-store',
       signal: controller.signal
     });
+    
+    if (!resp.ok) throw new Error('Cloudflare HTTP Error');
 
-    const blob = await resp.blob(); // Дожидаемся реальной загрузки 5МБ
+    const blob = await resp.blob(); 
     const t1 = performance.now();
     clearTimeout(timeoutId);
 
     const durationSeconds = (t1 - t0) / 1000;
-    const bitsLoaded = blob.size * 8; // Перевод в биты
-    speedMbps = (bitsLoaded / durationSeconds) / 1000000; // Перевод в Мбит/с
+    const bitsLoaded = blob.size * 8; 
+    speedMbps = (bitsLoaded / durationSeconds) / 1000000; 
 
     addLog(`> Payload downloaded in ${durationSeconds.toFixed(2)}s`);
   } catch(e) {
-    addLog(`> Bandwidth test blocked/timeout: ${e.message}`, true);
-    speedMbps = 0;
+    // ЕСЛИ CLOUDFLARE УПАЛ — ЗАПУСКАЕМ ФОЛБЕК ОТ ЯНДЕКСА
+    addLog(`> CF blocked/timeout. Fallback to Yandex...`, true);
+    
+    try {
+      const t0 = performance.now();
+      const fallbackController = new AbortController();
+      const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 10000);
+
+      // Скачиваем файл с CDN Яндекса (Yastatic)
+      const respYa = await fetch(`https://yastatic.net/s3/frontend/browser-common/react/16.14.0/react-dom.production.min.js?r=${Math.random()}`, {
+        cache: 'no-store',
+        signal: fallbackController.signal
+      });
+
+      const blobYa = await respYa.blob(); 
+      const t1 = performance.now();
+      clearTimeout(fallbackTimeoutId);
+
+      const durationSeconds = (t1 - t0) / 1000;
+      const bitsLoaded = blobYa.size * 8; 
+      speedMbps = (bitsLoaded / durationSeconds) / 1000000; 
+
+      addLog(`> Yandex payload downloaded in ${durationSeconds.toFixed(2)}s`);
+    } catch(errYa) {
+      addLog(`> Bandwidth test totally failed: ${errYa.message}`, true);
+      speedMbps = 0;
+    }
   }
 
   addLog(`Actual Download Speed: ${speedMbps.toFixed(2)} Mbps`, true);
