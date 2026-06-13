@@ -925,7 +925,7 @@ async function runPingTest(){
     const timeoutId = setTimeout(() => controller.abort(), 5000);
     
     try {
-      await fetch(`https://1.1.1.1/cdn-cgi/trace?t=${performance.now()}`, { 
+      await fetch(`https://cp.cloudflare.com/generate_204?t=${performance.now()}`, {
         mode: 'no-cors', 
         cache: 'no-store',
         signal: controller.signal 
@@ -943,14 +943,24 @@ async function runPingTest(){
   }
   return pings.length > 0 ? pings : [999];
 }
-// 2. ЧЕСТНЫЕ СЕРВИСЫ
+// 2. ЧЕСТНЫЕ СЕРВИСЫ (Жесткий тайм-аут 5 секунд)
 async function probeService(svc){
   const t0=performance.now();
   let ok=false;
+  
+  // Создаем контроллер для принудительной отмены запроса через 5000 мс
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+  
   try{
-    await fetch(svc.url, { mode:'no-cors', cache:'no-store' });
+    await fetch(svc.url, { mode:'no-cors', cache:'no-store', signal: controller.signal });
     ok=true;
-  }catch(e){ ok=false; }
+  }catch(e){ 
+    ok=false; 
+  } finally {
+    clearTimeout(timeoutId); // Обязательно чистим таймер
+  }
+  
   const ms = performance.now() - t0;
   const status = !ok ? 'fail' : ms>500 ? 'slow' : 'ok';
   addLog(`> HTTP GET ${svc.name} ... [${status.toUpperCase()}] ${ms.toFixed(0)}ms`, status==='fail');
@@ -1024,10 +1034,13 @@ async function runTest(){
   setProgress(55,'loading_ping', 4);
   await delay(150);
 
-  // === СТАБИЛЬНОСТЬ ===
+// === СТАБИЛЬНОСТЬ ===
   setProgress(60,'loading_stability', 4);
-  const jitter=Math.max(...pings)-Math.min(...pings);
-  const stability=Math.max(0,Math.min(100,100-jitter/avgPing*40));
+  const jitter = Math.max(...pings) - Math.min(...pings);
+  
+  // Если средний пинг 999 (все запросы упали), принудительно ставим 0% стабильности
+  const stability = avgPing >= 999 ? 0 : Math.max(0, Math.min(100, 100 - (jitter / avgPing) * 40));
+  
   addLog(`Jitter calculated: ${jitter.toFixed(1)} ms (Stability: ${stability.toFixed(1)}%)`);
   setProgress(72,'loading_stability', 4);
   await delay(150);
