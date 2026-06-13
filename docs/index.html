@@ -1016,32 +1016,37 @@ async function runTest(){
     speedMbps = (bitsLoaded / durationSeconds) / 1000000; 
 
     addLog(`> Payload downloaded in ${durationSeconds.toFixed(2)}s`);
-  } catch(e) {
-    // ЕСЛИ CLOUDFLARE УПАЛ — ЗАПУСКАЕМ ФОЛБЕК ОТ ЯНДЕКСА
-    addLog(`> CF blocked/timeout. Fallback to Yandex...`, true);
+} catch(e) {
+    // ЕСЛИ CLOUDFLARE УПАЛ — ЗАПУСКАЕМ ФОЛБЕК ОТ SELECTEL (RU)
+    addLog(`> CF blocked/timeout. Fallback to Selectel (RU)...`, true);
     
     try {
       const t0 = performance.now();
       const fallbackController = new AbortController();
       const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 10000);
 
-      // Скачиваем файл с CDN Яндекса (Yastatic)
-      const respYa = await fetch(`https://yastatic.net/s3/frontend/browser-common/react/16.14.0/react-dom.production.min.js?r=${Math.random()}`, {
+      // Скачиваем специальный 10-мегабайтный тестовый файл с российского сервера Selectel
+      const respFallback = await fetch(`https://speedtest.selectel.ru/10MB?r=${Math.random()}`, {
         cache: 'no-store',
         signal: fallbackController.signal
       });
+      
+      if (!respFallback.ok) throw new Error(`HTTP Error ${respFallback.status}`);
 
-      const blobYa = await respYa.blob(); 
+      const blobFallback = await respFallback.blob(); 
       const t1 = performance.now();
       clearTimeout(fallbackTimeoutId);
 
       const durationSeconds = (t1 - t0) / 1000;
-      const bitsLoaded = blobYa.size * 8; 
+      const bitsLoaded = blobFallback.size * 8; 
+      
+      if (bitsLoaded === 0) throw new Error('Empty payload received');
+      
       speedMbps = (bitsLoaded / durationSeconds) / 1000000; 
 
-      addLog(`> Yandex payload downloaded in ${durationSeconds.toFixed(2)}s`);
-    } catch(errYa) {
-      addLog(`> Bandwidth test totally failed: ${errYa.message}`, true);
+      addLog(`> Selectel payload (10MB) downloaded in ${durationSeconds.toFixed(2)}s`);
+    } catch(errFallback) {
+      addLog(`> Bandwidth test totally failed: ${errFallback.message}`, true);
       speedMbps = 0;
     }
   }
