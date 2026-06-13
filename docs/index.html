@@ -1017,16 +1017,16 @@ async function runTest(){
 
     addLog(`> Payload downloaded in ${durationSeconds.toFixed(2)}s`);
 } catch(e) {
-    // ЕСЛИ CLOUDFLARE УПАЛ — ЗАПУСКАЕМ ФОЛБЕК ОТ SELECTEL (RU)
-    addLog(`> CF blocked/timeout. Fallback to Selectel (RU)...`, true);
+    // ЕСЛИ CLOUDFLARE УПАЛ — ЗАПУСКАЕМ ФОЛБЕК ОТ YANDEX MIRROR (RU)
+    addLog(`> CF blocked/timeout. Fallback to Yandex Mirror (RU)...`, true);
     
     try {
       const t0 = performance.now();
       const fallbackController = new AbortController();
       const fallbackTimeoutId = setTimeout(() => fallbackController.abort(), 10000);
 
-      // Скачиваем специальный 10-мегабайтный тестовый файл с российского сервера Selectel
-      const respFallback = await fetch(`https://speedtest.selectel.ru/10MB?r=${Math.random()}`, {
+      // Скачиваем стабильный 10-мегабайтный тестовый файл с зеркала Яндекса
+      const respFallback = await fetch(`https://mirror.yandex.ru/mirrors/parrot/misc/10MB.bin?r=${Math.random()}`, {
         cache: 'no-store',
         signal: fallbackController.signal
       });
@@ -1044,7 +1044,7 @@ async function runTest(){
       
       speedMbps = (bitsLoaded / durationSeconds) / 1000000; 
 
-      addLog(`> Selectel payload (10MB) downloaded in ${durationSeconds.toFixed(2)}s`);
+      addLog(`> Yandex payload (10MB) downloaded in ${durationSeconds.toFixed(2)}s`);
     } catch(errFallback) {
       addLog(`> Bandwidth test totally failed: ${errFallback.message}`, true);
       speedMbps = 0;
