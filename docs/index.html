@@ -914,28 +914,35 @@ function addLog(msg, highlight=false) {
 function rand(min,max){ return min + Math.random()*(max-min); }
 function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
 
-// 1. ЧЕСТНЫЙ ПИНГ (С фиксом CORS)
+// 1. ЧЕСТНЫЙ ПИНГ (С фиксом CORS и таймаутом 5 сек)
 async function runPingTest(){
   const pings=[];
   for(let i=0;i<5;i++){
     const t0=performance.now();
+    
+    // Добавляем контроллер таймаута на 5 секунд (5000 мс)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
     try {
-      // Возвращаем mode: 'no-cors', иначе браузер жестко блокирует запрос.
-      // Добавлен параметр ?t= для стопроцентного обхода кэширования браузера.
-      await fetch(`https://1.1.1.1/cdn-cgi/trace?t=${performance.now()}`, { mode: 'no-cors', cache: 'no-store' });
+      await fetch(`https://1.1.1.1/cdn-cgi/trace?t=${performance.now()}`, { 
+        mode: 'no-cors', 
+        cache: 'no-store',
+        signal: controller.signal 
+      });
+      const dt = performance.now() - t0;
+      const p = Number(dt.toFixed(1));
+      pings.push(p);
+      addLog(`> icmp_seq=${i} time=${p} ms`);
     } catch(e) {
       addLog(`> icmp_seq=${i} FAIL`, true);
-      continue;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    const dt = performance.now() - t0;
-    const p = Number(dt.toFixed(1));
-    pings.push(p);
-    addLog(`> icmp_seq=${i} time=${p} ms`);
     await delay(100);
   }
   return pings.length > 0 ? pings : [999];
 }
-
 // 2. ЧЕСТНЫЕ СЕРВИСЫ
 async function probeService(svc){
   const t0=performance.now();
