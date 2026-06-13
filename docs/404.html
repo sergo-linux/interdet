@@ -3,55 +3,218 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>404 — InterDet</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+<title>404 — Signal Lost // InterDet</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%2300D2FF'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='JetBrains Mono, monospace' font-weight='700' font-size='15' fill='%23000000'%3EID%3C/text%3E%3C/svg%3E"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <style>
-:root { --cyan: #00D2FF; --bg: #05050A; --text: #E8E8F5; --muted: #8B92A5; --radius: 4px; }
+/* ─── DESIGN TOKENS ─── */
+:root {
+  --cyan:    #00D2FF;
+  --radius:  4px;
+  --radius-sm: 2px;
+  --transition: .22s cubic-bezier(.4,0,.2,1);
+}
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:       #05050A;
+  --border:   rgba(0, 210, 255, 0.15);
+  --text:     #E8E8F5;
+  --muted:    #8B92A5;
+  --scan-line:rgba(0,210,255,.05);
+}
+
+/* ─── RESET & BASE ─── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
-nav{padding:16px 24px;border-bottom:1px solid rgba(0, 210, 255, 0.15);}
-.nav-brand{display:flex;align-items:center;gap:12px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:1.15rem;}
-.brand-icon{width:32px;height:32px;background:var(--cyan);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.85rem;color:#000;}
-.page-404{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center;gap:24px;}
-.glitch-404{font-family:'JetBrains Mono',monospace;font-size:clamp(5rem,15vw,10rem);font-weight:700;line-height:1;color:var(--cyan);text-shadow:0 0 40px rgba(0,210,255,.4);}
-.err-title{font-size:1.5rem;font-weight:600;font-family:'JetBrains Mono',monospace;}
+body{
+  font-family:'Space Grotesk',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  display:flex;
+  flex-direction:column;
+}
+
+/* ─── SCAN-LINE OVERLAY ─── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,var(--scan-line) 0,var(--scan-line) 1px,transparent 1px,transparent 4px);
+  pointer-events:none;z-index:0;opacity:.5;
+}
+
+/* ─── NAVBAR ─── */
+nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 24px;
+  border-bottom:1px solid var(--border);
+  backdrop-filter:blur(10px);
+  background:rgba(5,5,10,.8);
+  position:relative;z-index:10;
+}
+.nav-brand{
+  display:flex;align-items:center;gap:12px;
+  font-family:'JetBrains Mono',monospace;
+  font-weight:700;font-size:1.15rem;letter-spacing:-.02em;
+}
+.brand-icon{
+  width:32px;height:32px;
+  background:var(--cyan);
+  border-radius:var(--radius-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85rem;color:#000;font-weight:700;
+  box-shadow: 0 0 12px rgba(0,210,255,.4);
+}
+
+/* ─── 404 CONTENT ─── */
+.page-404{
+  flex:1;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:60px 24px;text-align:center;
+  gap:24px;
+  position:relative;z-index:1;
+}
+.glitch-404{
+  font-family:'JetBrains Mono',monospace;
+  font-size:clamp(5rem,15vw,10rem);
+  font-weight:700;
+  line-height:1;
+  color:var(--cyan);
+  text-shadow:0 0 40px rgba(0,210,255,.4);
+}
+.err-title{font-size:1.5rem;font-weight:600; font-family:'JetBrains Mono',monospace;}
 .err-sub{font-size:1rem;color:var(--muted);max-width:400px;line-height:1.6}
-.cta-btn{padding:18px 44px;background:var(--cyan);color:#000;font-weight:700;border-radius:var(--radius);cursor:pointer;font-family:'JetBrains Mono',monospace;text-transform:uppercase;border:none;}
+
+.cta-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  padding:18px 44px;
+  background:var(--cyan);
+  color:#000;
+  font-weight:700;font-size:1.05rem;
+  border-radius:var(--radius);
+  transition:all .2s;
+  box-shadow:0 0 20px rgba(0,210,255,.3);
+  font-family:'JetBrains Mono',monospace;
+  text-transform:uppercase;
+  border:none;
+  outline:none;
+  cursor:pointer;
+}
+.cta-btn:hover{transform:translateY(-2px);box-shadow:0 0 30px rgba(0,210,255,.5);background:#33DDFF}
+.cta-btn:active{transform:translateY(0)}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-brand"><div class="brand-icon">ID</div>InterDet</div>
-</nav>
+  <nav>
+    <div class="nav-brand"><div class="brand-icon">ID</div>InterDet</div>
+  </nav>
 
-<div class="page-404">
-  <div class="glitch-404">404</div>
-  <div class="err-title" data-i18n="err_title">Signal Lost</div>
-  <div class="err-sub" data-i18n="err_sub">This page drifted into the network void.</div>
-  <button class="cta-btn" onclick="window.location.href='index.html'">
-    <span data-i18n="go_home">Go Home</span>
-  </button>
-</div>
+  <div class="page-404">
+    <div class="glitch-404">404</div>
+    <div class="err-title" data-i18n="err_title">Signal Lost</div>
+    <div class="err-sub" data-i18n="err_sub">This page drifted into the network void.</div>
+    <button class="cta-btn" onclick="window.location.href='index.html'">
+      <span data-i18n="go_home">Go Home</span>
+    </button>
+  </div>
 
 <script>
+/* ═══════════════════════════════════════════════════════════════
+   i18n STRINGS (ONLY 404 REQUIRED KEYS)
+═══════════════════════════════════════════════════════════════ */
 const STRINGS = {
-  en:{ err_title:"Signal Lost", err_sub:"This page drifted into the network void.", go_home:"Go Home" },
-  ru:{ err_title:"Сигнал потерян", err_sub:"Эта страница ушла в сетевой вакуум.", go_home:"На главную" },
-  es:{ err_title:"Señal perdida", err_sub:"Esta página vagó hacia el vacío de la red.", go_home:"Inicio" },
-  de:{ err_title:"Signal verloren", err_sub:"Diese Seite ist im Netzwerk-Vakuum gelandet.", go_home:"Zur Startseite" },
-  fr:{ err_title:"Signal perdu", err_sub:"Cette page a dérivé dans le vide du réseau.", go_home:"Accueil" },
-  tr:{ err_title:"Sinyal Kayboldu", err_sub:"Bu sayfa ağ boşluğuna sürüklendi.", go_home:"Ana Sayfa" },
-  pl:{ err_title:"Sygnał utracony", err_sub:"Ta strona dryfowała w próżnię sieci.", go_home:"Główna" },
-  uk:{ err_title:"Сигнал втрачено", err_sub:"Ця сторінка пішла в мережевий вакуум.", go_home:"На головну" }
+  en: {
+    err_title: "Signal Lost",
+    err_sub: "This page drifted into the network void.",
+    go_home: "Go Home"
+  },
+  ru: {
+    err_title: "Сигнал потерян",
+    err_sub: "Пакет так и не достиг пункта назначения.",
+    go_home: "На главную"
+  },
+  es: {
+    err_title: "Señal perdida",
+    err_sub: "El paquete no llegó a su destino.",
+    go_home: "Inicio"
+  },
+  de: {
+    err_title: "Signal verloren",
+    err_sub: "Das angeforderte Paket ist nie angekommen.",
+    go_home: "Zur Startseite"
+  },
+  fr: {
+    err_title: "Signal perdu",
+    err_sub: "Le paquet demandé n'est jamais arrivé.",
+    go_home: "Accueil"
+  },
+  tr: {
+    err_title: "Sinyal Kayboldu",
+    err_sub: "İstenen paket hedefine ulaşamadı.",
+    go_home: "Ana Sayfa"
+  },
+  pl: {
+    err_title: "Sygnał utracony",
+    err_sub: "Żądany pakiet nie dotarł do celu.",
+    go_home: "Główna"
+  },
+  ua: {
+    err_title: "Сигнал втрачено",
+    err_sub: "Пакет так і не досяг пункту призначення.",
+    go_home: "На головну"
+  }
 };
 
-(function() {
-  const lang = localStorage.getItem('app_lang') || 'en';
-  const data = STRINGS[lang] || STRINGS['en'];
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    el.textContent = data[el.getAttribute('data-i18n')];
+let lang = 'en';
+
+function setLang(l){
+  lang = l;
+  applyStrings();
+}
+
+function t(key){ return (STRINGS[lang]||STRINGS['en'])[key] || key; }
+
+function applyStrings(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{
+    el.textContent = t(el.getAttribute('data-i18n'));
   });
+}
+
+/* ——— INIT ——— */
+(function init(){
+  const supportedLangs = ['en', 'ru', 'es', 'de', 'fr', 'tr', 'pl', 'ua'];
+
+  function getLang() {
+    // А: Из URL-пути
+    const pathSegments = window.location.pathname.toLowerCase().split('/');
+    let lang = pathSegments.find(seg => supportedLangs.includes(seg));
+
+    // Б: Из параметров запроса (подстраховка для редиректов GitHub Pages)
+    if (!lang) {
+      const p = new URLSearchParams(window.location.search).get('p');
+      if (p) lang = p.toLowerCase().split('/').find(seg => supportedLangs.includes(seg));
+    }
+
+    // В: Из памяти браузера
+    if (!lang) {
+      lang = localStorage.getItem('app_lang');
+    }
+
+    return lang && supportedLangs.includes(lang) ? lang : null;
+  }
+
+  const activeLang = getLang();
+
+  if (activeLang) {
+    setLang(activeLang);
+  } else {
+    let userLang = (navigator.language || 'en').slice(0, 2).toLowerCase();
+    if (userLang === 'uk') userLang = 'ua';
+    setLang(supportedLangs.includes(userLang) ? userLang : 'en');
+  }
 })();
 </script>
 </body>
